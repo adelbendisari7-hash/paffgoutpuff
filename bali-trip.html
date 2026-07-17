@@ -1,0 +1,1334 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#1B1712;
+    --bg-elev:#241F19;
+    --bg-elev-2:#2C261E;
+    --line:#3A3226;
+    --paper:#EDE6D3;
+    --ink-soft:#B9AF9B;
+    --gold:#CDA351;
+    --green:#7FA06A;
+    --clay:#C1603E;
+    --teal:#5B9C97;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body,html{margin:0;padding:0;}
+  .app{
+    background:var(--bg);
+    color:var(--paper);
+    font-family:'IBM Plex Sans',sans-serif;
+    min-height:100vh;
+    padding:0 0 60px 0;
+  }
+  ::selection{background:var(--gold);color:#1B1712;}
+
+  /* header + timeline */
+  .header{
+    padding:28px 20px 20px;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-style:italic;
+    font-size:clamp(28px,5vw,42px);
+    margin:0 0 18px;
+    color:var(--paper);
+  }
+  .timeline-scroll{
+    overflow-x:auto;
+    padding-bottom:6px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .timeline{
+    display:flex;
+    align-items:flex-start;
+    gap:0;
+    min-width:max-content;
+    padding:6px 2px 0;
+    position:relative;
+  }
+  .tl-node{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    width:108px;
+    flex-shrink:0;
+    position:relative;
+  }
+  .tl-node:not(:last-child)::after{
+    content:'';
+    position:absolute;
+    top:19px;
+    left:calc(50% + 22px);
+    width:calc(100% - 22px);
+    border-top:2px dashed var(--line);
+  }
+  .tl-stamp{
+    width:38px;height:38px;border-radius:50%;
+    border:2px solid var(--gold);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;font-weight:600;
+    color:var(--gold);
+    background:var(--bg-elev);
+    z-index:1;
+  }
+  .tl-node.active .tl-stamp{background:var(--gold);color:#1B1712;}
+  .tl-name{
+    font-size:12.5px;font-weight:600;margin-top:8px;text-align:center;color:var(--paper);
+  }
+  .tl-dates{
+    font-size:10.5px;color:var(--ink-soft);margin-top:2px;text-align:center;
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  /* tabs */
+  .tabs{
+    display:flex;gap:6px;padding:18px 20px 0;
+    max-width:900px;margin:0 auto;
+  }
+  .tab{
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:14px;font-weight:500;
+    padding:10px 18px;border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;color:var(--ink-soft);
+    cursor:pointer;transition:all .15s ease;
+  }
+  .tab.active{background:var(--gold);color:#1B1712;border-color:var(--gold);}
+  .tab:hover:not(.active){border-color:var(--gold);color:var(--paper);}
+
+  .panel{max-width:900px;margin:0 auto;padding:22px 20px 0;}
+  .panel[hidden]{display:none;}
+
+  /* itinerary */
+  .stop-card{
+    background:var(--bg-elev);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-bottom:12px;
+    overflow:hidden;
+  }
+  .stop-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:16px 18px;cursor:pointer;
+  }
+  .stop-title{display:flex;flex-direction:column;gap:2px;}
+  .stop-title .name{font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:19px;}
+  .stop-title .meta{font-size:12.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  .chevron{color:var(--gold);transition:transform .2s;font-size:18px;}
+  .stop-card.open .chevron{transform:rotate(180deg);}
+  .stop-body{padding:0 18px 16px;display:none;}
+  .stop-card.open .stop-body{display:block;}
+  .no-detail{font-size:13px;color:var(--ink-soft);padding:4px 0;}
+
+  /* budget */
+  .ledger-top{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;
+  }
+  .ledger-box{
+    background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;text-align:center;
+  }
+  .ledger-box .label{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em;}
+  .ledger-box .value{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;margin-top:6px;}
+  .ledger-box.over .value{color:var(--clay);}
+  .ledger-box.ok .value{color:var(--green);}
+
+  .people-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;}
+  .chip{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;
+    background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;
+    padding:6px 10px;color:var(--paper);
+  }
+  .chip b{color:var(--gold);}
+
+  .form-card{
+    background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:20px;
+  }
+  .form-title{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:0 0 12px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .form-grid input,.form-grid select{
+    grid-column:span 1;
+  }
+  input,select{
+    background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;
+    padding:9px 10px;color:var(--paper);font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;
+    width:100%;
+  }
+  input::placeholder{color:var(--ink-soft);}
+  input:focus,select:focus,button:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  .btn{
+    font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:13.5px;
+    background:var(--gold);color:#1B1712;border:none;border-radius:8px;
+    padding:10px 16px;cursor:pointer;margin-top:12px;width:100%;
+  }
+  .btn:hover{filter:brightness(1.08);}
+
+  .expense-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:11px 0;border-top:1px solid var(--line);font-size:13.5px;
+  }
+  .expense-row:first-child{border-top:none;}
+  .expense-main{display:flex;flex-direction:column;}
+  .expense-main .desc{font-weight:500;}
+  .expense-main .sub{font-size:11.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  .expense-amount{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--gold);}
+  .del-btn{
+    background:none;border:none;color:var(--clay);font-size:16px;cursor:pointer;margin-left:10px;padding:0 4px;
+  }
+  .empty{color:var(--ink-soft);font-size:13px;padding:14px 0;text-align:center;}
+
+  /* checklist */
+  .cl-group{
+    background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);
+    margin-bottom:14px;padding:16px 18px;
+  }
+  .cl-group-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .cl-group-head .name{font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:17px;}
+  .cl-progress-track{
+    width:100%;height:5px;background:var(--bg-elev-2);border-radius:4px;overflow:hidden;margin-bottom:12px;
+  }
+  .cl-progress-fill{height:100%;background:var(--green);border-radius:4px;transition:width .2s;}
+  .cl-item{
+    display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid var(--line);
+  }
+  .cl-item:first-child{border-top:none;}
+  .cl-check{
+    width:19px;height:19px;border-radius:5px;border:2px solid var(--gold);
+    flex-shrink:0;margin-top:1px;cursor:pointer;background:transparent;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .cl-check.checked{background:var(--green);border-color:var(--green);}
+  .cl-check.checked::after{content:'✓';color:#1B1712;font-size:12px;font-weight:700;}
+  .cl-text{flex:1;font-size:13.5px;line-height:1.5;}
+  .cl-text .price{color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  .cl-by{font-size:11px;color:var(--teal);font-family:'IBM Plex Mono',monospace;margin-top:2px;}
+
+  .name-banner{
+    background:var(--bg-elev-2);border:1px solid var(--gold);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  }
+  .name-banner span{font-size:13px;color:var(--ink-soft);}
+  .name-banner input,.name-banner select{max-width:160px;}
+  .name-banner .btn{width:auto;margin-top:0;padding:9px 14px;}
+
+  .ledger-sub{font-size:10.5px;color:var(--ink-soft);margin-top:2px;font-family:'IBM Plex Mono',monospace;}
+
+  .maps-link{
+    display:inline-block;font-size:12.5px;color:var(--teal);text-decoration:none;
+    font-family:'IBM Plex Mono',monospace;margin-bottom:10px;
+  }
+  .maps-link:hover{text-decoration:underline;}
+
+  .stop-notes{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);}
+  .notes-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:0 0 8px;}
+  .notes-list{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .note-item{background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+  .note-text{font-size:13px;line-height:1.5;}
+  .note-meta{font-size:11px;color:var(--teal);font-family:'IBM Plex Mono',monospace;margin-top:4px;display:flex;justify-content:space-between;align-items:center;}
+  .note-form{display:flex;gap:8px;}
+  .note-input{flex:1;}
+
+  .chip-remove{background:none;border:none;color:var(--clay);cursor:pointer;font-size:13px;margin-left:4px;padding:0;}
+
+  .cat-bar-row{margin-bottom:12px;}
+  .cat-bar-row:last-child{margin-bottom:0;}
+  .cat-bar-label{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;}
+  .cat-bar-label span:first-child{font-weight:500;}
+  .cat-bar-label span:last-child{color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
+  .cat-bar-track{width:100%;height:7px;background:var(--bg-elev-2);border-radius:4px;overflow:hidden;}
+  .cat-bar-fill{height:100%;background:var(--gold);border-radius:4px;}
+
+  .settle-row{
+    display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px;
+  }
+  .settle-row:first-child{border-top:none;}
+  .settle-name{font-weight:500;}
+  .settle-arrow{color:var(--gold);}
+  .settle-row .expense-amount{margin-left:auto;}
+
+  .backup-actions{display:flex;gap:10px;}
+  .backup-actions .btn{flex:1;}
+
+  .activity-row{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+    padding:11px 0;border-top:1px solid var(--line);font-size:13.5px;
+  }
+  .activity-row:first-child{border-top:none;}
+  .activity-main{display:flex;flex-direction:column;gap:3px;}
+  .activity-main .desc{font-weight:500;}
+  .activity-main .sub{
+    font-size:11.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;
+    display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  }
+  .activity-main .sub .maps-link{margin-bottom:0;font-size:11.5px;}
+  .activity-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+  .field-hint{color:var(--clay);font-size:12px;margin:8px 0 0;}
+
+  .act-date-input{
+    background:var(--bg-elev-2);border:1px solid var(--line);border-radius:8px;
+    padding:8px;color:var(--paper);font-family:'IBM Plex Sans',sans-serif;font-size:12px;
+    width:auto;color-scheme:dark;
+  }
+
+  .stop-activities{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);}
+
+  .accommodation-block{margin-bottom:12px;}
+  .accommodation-note{font-size:12px;color:var(--ink-soft);margin:0;line-height:1.5;}
+  .accommodation-note.warning{color:var(--clay);}
+
+  .phase-ref-row{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-top:1px solid var(--line);font-size:13px;}
+  .phase-ref-row:first-child{border-top:none;}
+  .phase-ref-row .phase-name{font-weight:500;}
+  .phase-ref-row .phase-amt{font-family:'IBM Plex Mono',monospace;color:var(--gold);font-size:12px;text-align:right;}
+  .phase-ref-row.total{border-top:1px solid var(--line);margin-top:4px;padding-top:12px;}
+  .phase-ref-row.total .phase-amt{color:var(--paper);font-weight:600;}
+
+  .person-budget-row{margin-bottom:14px;}
+  .person-budget-row:last-child{margin-bottom:0;}
+  .person-budget-head{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;}
+  .person-budget-head span:first-child{font-weight:500;}
+  .person-budget-head span:last-child{color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
+  .person-budget-head span:last-child.over{color:var(--clay);}
+  .cl-progress-fill.over{background:var(--clay);}
+
+  .rate-note{font-size:11px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;margin:-12px 0 20px;text-align:center;}
+
+  .header-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;}
+  .countdown-badge{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+    background:var(--bg-elev-2);border:1px solid var(--gold);color:var(--gold);
+    padding:4px 10px;border-radius:999px;white-space:nowrap;
+  }
+
+  .search-row{display:flex;gap:8px;margin-bottom:0;}
+  .search-row input{flex:1;}
+  .activity-city-tag{color:var(--teal);}
+
+  @media(max-width:520px){
+    .form-grid{grid-template-columns:1fr;}
+    .ledger-top{grid-template-columns:1fr;}
+  }
+</style>
+
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <p class="eyebrow">Voyage · 13 août → 7 septembre</p>
+      <span class="countdown-badge" id="countdown-badge"></span>
+    </div>
+    <h1>Bali & Java, à cinq</h1>
+    <div class="timeline-scroll">
+      <div class="timeline" id="timeline"></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="itineraire">Itinéraire</button>
+    <button class="tab" data-tab="budget">Budget</button>
+    <button class="tab" data-tab="checklist">Checklist</button>
+    <button class="tab" data-tab="activites">Activités</button>
+  </div>
+
+  <div class="panel" id="panel-itineraire"></div>
+  <div class="panel" id="panel-budget" hidden></div>
+  <div class="panel" id="panel-checklist" hidden></div>
+  <div class="panel" id="panel-activites" hidden></div>
+</div>
+
+<script>
+(function(){
+
+  const STOPS = [
+    {id:'jakarta', name:'Jakarta', dates:'13–15 août', code:'JKT', start:'2026-08-13', end:'2026-08-15', mapQuery:'Jakarta, Indonesia',
+      accommodation:{mapsUrl:'https://www.google.com/maps/search/?api=1&query=Taman+Anggrek+Residence+Jakarta', note:null, warning:false}},
+    {id:'yogyakarta', name:'Yogyakarta', dates:'15–18 août', code:'YIA', start:'2026-08-15', end:'2026-08-18', mapQuery:'Yogyakarta, Indonesia',
+      accommodation:{mapsUrl:'https://www.google.com/maps/search/?api=1&query=Mlati+Yogyakarta+Jalan+Kragilan', note:null, warning:false}},
+    {id:'malang', name:'Malang', dates:'18–20 août', code:'MLG', start:'2026-08-18', end:'2026-08-20', mapQuery:'Malang, Indonesia',
+      accommodation:{mapsUrl:'https://www.google.com/maps/search/?api=1&query=Kecamatan+Lowokwaru+Malang', note:null, warning:false}},
+    {id:'banyuwangi', name:'Banyuwangi', dates:'20–21 août', code:'BWX', start:'2026-08-20', end:'2026-08-21', mapQuery:'Banyuwangi, Indonesia',
+      accommodation:{mapsUrl:null, note:'Annonce introuvable (erreur 410) — à vérifier sur votre compte Airbnb', warning:true}},
+    {id:'ubud', name:'Ubud', dates:'21–25 août', code:'UBD', start:'2026-08-21', end:'2026-08-25', mapQuery:'Ubud, Bali, Indonesia',
+      accommodation:{mapsUrl:'https://www.google.com/maps/search/?api=1&query=Lodtunduh+Ubud+Bali', note:null, warning:false}},
+    {id:'nusapenida', name:'Nusa Penida', dates:'25–27 août', code:'NPD', start:'2026-08-25', end:'2026-08-27', mapQuery:'Nusa Penida, Bali, Indonesia',
+      accommodation:{mapsUrl:'https://www.google.com/maps/search/?api=1&query=Nusa+Penida', note:'Adresse précise disponible uniquement via votre confirmation Booking.com', warning:false}},
+    {id:'nusalembongan', name:'Nusa Lembongan', dates:'27–29 août', code:'NLM', start:'2026-08-27', end:'2026-08-29', mapQuery:'Nusa Lembongan, Bali, Indonesia',
+      accommodation:{mapsUrl:'https://www.google.com/maps/search/?api=1&query=Nusa+Lembongan', note:'Adresse précise disponible uniquement via votre confirmation Booking.com', warning:false}},
+    {id:'canggu', name:'Canggu', dates:'29 août–3 sept', code:'CGU', start:'2026-08-29', end:'2026-09-03', mapQuery:'Canggu, Bali, Indonesia',
+      accommodation:{mapsUrl:'https://www.google.com/maps/search/?api=1&query=Dalung+Kuta+Utara+Bali', note:'En réalité à Dalung, pas en bord de plage — seulement 3,67★/3 avis', warning:true}},
+    {id:'uluwatu', name:'Uluwatu', dates:'3–7 sept', code:'ULW', start:'2026-09-03', end:'2026-09-07', mapQuery:'Uluwatu, Bali, Indonesia',
+      accommodation:{mapsUrl:'https://www.google.com/maps/search/?api=1&query=Bukit+Peninsula+Kuta+Selatan+Uluwatu', note:'Aucun avis pour ce logement précis', warning:true}},
+  ];
+
+  const CHECKLIST_GROUPS = [
+    {id:'canggu', name:'Canggu', items:[
+      {t:'Body Factory Bali (gym)', p:'18-29€'},
+      {t:'Batu Bolong Beach', p:'gratuit'},
+      {t:'Echo Beach', p:'gratuit'},
+      {t:'La Brisa Bali', p:'18-35€ min. conso'},
+      {t:'Finns Beach Club', p:'gratuit / ~93€ daybed'},
+      {t:'Autres beach clubs', p:'variable'},
+      {t:'Beachwalk Shopping Center', p:'gratuit'},
+      {t:'Discovery Mall', p:'gratuit'},
+      {t:'Cours de surf', p:'23-32€'},
+    ]},
+    {id:'ubud', name:'Ubud', items:[
+      {t:'Bali Zoo', p:'21€'},
+      {t:'Cretya Ubud (day club)', p:'4€'},
+      {t:'Monkey Forest', p:'5-6€'},
+      {t:'Rafting (Ayung River)', p:'20-27€'},
+      {t:'Tegallalang rice terrace', p:'1-1,5€'},
+      {t:'ATV tour', p:'29-35€'},
+      {t:'Pasar Seni (marché)', p:'gratuit'},
+      {t:'Tirta Empul', p:'3-4,5€'},
+      {t:'Goa Gajah', p:'3€'},
+      {t:'Art market', p:'gratuit'},
+      {t:'Massage', p:'6-18€'},
+    ]},
+    {id:'nusapenida', name:'Nusa Penida', items:[
+      {t:'Kelingking Beach', p:'0,6-1,5€'},
+      {t:'Diamond Beach', p:'2€'},
+      {t:'Bungy jump', p:'160-175€'},
+      {t:'Jetski', p:'18-47€'},
+    ]},
+    {id:'uluwatu', name:'Uluwatu', items:[
+      {t:'Uluwatu Temple', p:'3€'},
+      {t:'Danse Kecak', p:'9€'},
+      {t:'Padang Padang Beach', p:'1€'},
+      {t:'Suluban Beach (blue point)', p:'0,6€'},
+      {t:'Savaya Bali', p:'9€ / daybed 93-185€'},
+      {t:'Single Fin', p:'gratuit / 15-20€ sur place'},
+      {t:'Cours de surf', p:'23-32€'},
+      {t:'Garuda Wisnu Kencana', p:'9€'},
+      {t:'Waterbom Bali', p:'45€'},
+    ]},
+  ];
+
+  const NB_PEOPLE = 5;
+  const AVANT_BALI_PER_PERSON = 350; // recommandé, partie Java (Jakarta → Banyuwangi)
+  const A_BALI_PER_PERSON = 700; // recommandé, partie Bali (Ubud → Uluwatu)
+  const BUDGET_PER_PERSON = AVANT_BALI_PER_PERSON + A_BALI_PER_PERSON; // 1050€/pers
+  const TOTAL_BUDGET = BUDGET_PER_PERSON * NB_PEOPLE; // 5250€
+  let IDR_PER_EUR = 17000; // valeur par défaut/repli — écrasée par refreshExchangeRate() si l'API répond
+  let exchangeRateSource = 'default'; // 'default' | 'cache' | 'live'
+  const LS_RATE_KEY = 'bali-trip-idr-rate';
+  const LS_RATE_TS_KEY = 'bali-trip-idr-rate-ts';
+  const RATE_CACHE_MS = 12 * 60 * 60 * 1000; // 12h
+
+  async function refreshExchangeRate(){
+    try{
+      const cachedRate = Number(localStorage.getItem(LS_RATE_KEY) || 0);
+      const cachedTs = Number(localStorage.getItem(LS_RATE_TS_KEY) || 0);
+      if(cachedRate && (Date.now() - cachedTs) < RATE_CACHE_MS){
+        IDR_PER_EUR = cachedRate;
+        exchangeRateSource = 'cache';
+        return;
+      }
+    }catch(e){ /* localStorage unavailable */ }
+    try{
+      const res = await fetch('https://api.frankfurter.dev/v1/latest?base=EUR&symbols=IDR');
+      const data = await res.json();
+      if(data && data.rates && data.rates.IDR){
+        IDR_PER_EUR = data.rates.IDR;
+        exchangeRateSource = 'live';
+        try{
+          localStorage.setItem(LS_RATE_KEY, String(IDR_PER_EUR));
+          localStorage.setItem(LS_RATE_TS_KEY, String(Date.now()));
+        }catch(e){ /* storage unavailable */ }
+      }
+    }catch(e){ console.error('exchange rate fetch failed, using fallback rate', e); }
+  }
+
+  let tripData = {expenses: [], notes: {}, participants: [], activities: [], seeded: false};
+  let myName = '';
+  let openStops = {};
+  let activityCity = STOPS[0].id;
+
+  function normalizeTripData(){
+    if(!Array.isArray(tripData.expenses)) tripData.expenses = [];
+    if(!tripData.notes || typeof tripData.notes !== 'object') tripData.notes = {};
+    if(!Array.isArray(tripData.participants)) tripData.participants = [];
+    if(!Array.isArray(tripData.activities)) tripData.activities = [];
+    if(typeof tripData.seeded !== 'boolean') tripData.seeded = false;
+  }
+
+  function formatIDR(eur){
+    return Math.round(eur * IDR_PER_EUR).toLocaleString('fr-FR') + ' IDR';
+  }
+
+  // Renders a <select> of tripData.participants (so paidBy/addedBy/myName are always an exact,
+  // canonical string instead of free-typed text prone to "Adel" vs "adel" mismatches in the
+  // budget/settlement calculations). Falls back to a plain text input until participants exist —
+  // same element id either way, so callers can keep reading `.value` unchanged.
+  function nameSelectHTML(id, selected){
+    if(!tripData.participants.length){
+      return `<input id="${id}" placeholder="ton prénom" value="${selected||''}" />`;
+    }
+    const options = tripData.participants.map(p=>`<option value="${p}" ${p===selected?'selected':''}>${p}</option>`).join('');
+    return `<select id="${id}"><option value="">— choisir —</option>${options}</select>`;
+  }
+
+  const FR_MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  function formatFrenchDate(iso){
+    if(!iso) return '';
+    const [y,m,d] = iso.split('-').map(Number);
+    return `${d} ${FR_MONTHS[m-1]}`;
+  }
+
+  function parsePriceEUR(priceStr){
+    if(/^gratuit/i.test(priceStr.trim())) return 0;
+    const match = priceStr.replace(',', '.').match(/(\d+(\.\d+)?)/);
+    return match ? Number(match[1]) : 0;
+  }
+
+  function buildMapsSearchUrl(query){
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+  }
+
+  // Migrates the curated CHECKLIST_GROUPS list into tripData.activities (status 'proposed') once,
+  // so it flows through the same propose → confirm(+date) → checklist/itinerary pipeline as user-added activities.
+  function seedActivitiesFromChecklist(){
+    if(tripData.seeded) return false;
+    CHECKLIST_GROUPS.forEach(g=>{
+      const stop = STOPS.find(s=>s.id===g.id);
+      if(!stop) return;
+      g.items.forEach(item=>{
+        const amountEUR = parsePriceEUR(item.p);
+        tripData.activities.push({
+          id: 'seed-'+g.id+'-'+Math.random().toString(36).slice(2,9),
+          stopId: g.id,
+          name: item.t,
+          mapsUrl: buildMapsSearchUrl(`${item.t}, ${stop.mapQuery}`),
+          amountEUR, origAmount: amountEUR, origCurrency: 'EUR',
+          priceLabel: item.p,
+          addedBy: 'Programme initial',
+          status: 'proposed',
+          date: null,
+          checked: false,
+          checkedBy: null
+        });
+      });
+    });
+    tripData.seeded = true;
+    return true;
+  }
+
+  // ---------- supabase realtime sync (optional) ----------
+  // Fill these in once you've created a free Supabase project (see CLAUDE.md for the exact
+  // table/SQL to run) to get live cross-device sync instead of the per-device/per-host storage
+  // below. Left empty, none of this runs — behavior is unchanged from before.
+  const SUPABASE_URL = 'https://fdhnqguqxdymjdesoqat.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_JtKJvPW7tccEt9gk7cU8qA_OvxppKFa';
+  const SUPABASE_TRIP_ID = 'bali-trip-2026'; // arbitrary fixed row id, shared by everyone
+
+  let supabaseClient = null;
+  let supabaseChannel = null;
+
+  function supabaseEnabled(){
+    return !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+  }
+
+  function loadSupabaseSdk(){
+    return new Promise((resolve, reject)=>{
+      if(window.supabase){ resolve(); return; }
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  async function initSupabase(){
+    if(!supabaseEnabled()) return;
+    try{
+      await loadSupabaseSdk();
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }catch(e){ console.error('supabase init failed', e); supabaseClient = null; }
+  }
+
+  async function loadFromSupabase(){
+    if(!supabaseClient) return false;
+    try{
+      const { data, error } = await supabaseClient.from('trip_state').select('data').eq('id', SUPABASE_TRIP_ID).maybeSingle();
+      if(error || !data || !data.data) return false;
+      tripData = data.data;
+      return true;
+    }catch(e){ console.error('supabase load failed', e); return false; }
+  }
+
+  async function saveToSupabase(){
+    if(!supabaseClient) return false;
+    try{
+      const { error } = await supabaseClient.from('trip_state').upsert({ id: SUPABASE_TRIP_ID, data: tripData, updated_at: new Date().toISOString() });
+      return !error;
+    }catch(e){ console.error('supabase save failed', e); return false; }
+  }
+
+  function subscribeSupabaseRealtime(){
+    if(!supabaseClient || supabaseChannel) return;
+    supabaseChannel = supabaseClient
+      .channel('trip_state_changes')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'trip_state', filter: `id=eq.${SUPABASE_TRIP_ID}` }, payload=>{
+        if(payload.new && payload.new.data){
+          tripData = payload.new.data;
+          normalizeTripData();
+          renderItinerary();
+          renderBudget();
+          renderChecklist();
+          renderActivities();
+        }
+      })
+      .subscribe();
+  }
+
+  // ---------- storage ----------
+  const LS_TRIP_KEY = 'bali-trip-data';
+  const LS_NAME_KEY = 'bali-trip-my-name';
+
+  async function loadAll(){
+    await initSupabase();
+    let loaded = supabaseEnabled() ? await loadFromSupabase() : false;
+    if(!loaded){
+      try{
+        const r = await window.storage.get('trip-data', true);
+        if(r && r.value){ tripData = JSON.parse(r.value); loaded = true; }
+      }catch(e){ /* host storage unavailable */ }
+    }
+    if(!loaded){
+      try{
+        const raw = localStorage.getItem(LS_TRIP_KEY);
+        if(raw) tripData = JSON.parse(raw);
+      }catch(e){ /* no local data either */ }
+    }
+    normalizeTripData();
+    if(supabaseEnabled()) subscribeSupabaseRealtime();
+
+    let nameLoaded = false;
+    try{
+      const r2 = await window.storage.get('my-name', false);
+      if(r2 && r2.value){ myName = r2.value; nameLoaded = true; }
+    }catch(e){ /* host storage unavailable */ }
+    if(!nameLoaded){
+      try{
+        const n = localStorage.getItem(LS_NAME_KEY);
+        if(n) myName = n;
+      }catch(e){ /* not set */ }
+    }
+  }
+  async function saveTrip(){
+    const json = JSON.stringify(tripData);
+    if(supabaseEnabled()) await saveToSupabase();
+    try{ await window.storage.set('trip-data', json, true); }
+    catch(e){ console.error('host save failed, falling back to local storage', e); }
+    try{ localStorage.setItem(LS_TRIP_KEY, json); }catch(e){ /* storage full/unavailable */ }
+  }
+  async function saveName(){
+    try{ await window.storage.set('my-name', myName, false); }
+    catch(e){ console.error('host save name failed, falling back to local storage', e); }
+    try{ localStorage.setItem(LS_NAME_KEY, myName); }catch(e){ /* storage full/unavailable */ }
+  }
+
+  // ---------- countdown ----------
+  function renderCountdown(){
+    const el = document.getElementById('countdown-badge');
+    const today = new Date(); today.setHours(0,0,0,0);
+    const tripStart = new Date(STOPS[0].start);
+    const tripEnd = new Date(STOPS[STOPS.length-1].end);
+    const daysToStart = Math.round((tripStart - today) / 86400000);
+    let text;
+    if(today < tripStart) text = `J-${daysToStart} avant le départ`;
+    else if(today <= tripEnd) text = 'En plein voyage 🌴';
+    else text = 'Voyage terminé';
+    el.textContent = text;
+  }
+
+  // ---------- timeline ----------
+  function renderTimeline(){
+    const el = document.getElementById('timeline');
+    const today = new Date(); today.setHours(0,0,0,0);
+    el.innerHTML = STOPS.map(s => {
+      const isActive = today >= new Date(s.start) && today <= new Date(s.end);
+      return `
+      <div class="tl-node ${isActive?'active':''}">
+        <div class="tl-stamp">${s.code}</div>
+        <div class="tl-name">${s.name}</div>
+        <div class="tl-dates">${s.dates}</div>
+      </div>
+    `;}).join('');
+    const activeNode = el.querySelector('.tl-node.active');
+    if(activeNode) activeNode.scrollIntoView({behavior:'auto', inline:'center', block:'nearest'});
+  }
+
+  // ---------- itinerary ----------
+  function renderItinerary(){
+    const el = document.getElementById('panel-itineraire');
+    el.innerHTML = STOPS.map(s => {
+      const notes = tripData.notes[s.id] || [];
+      const confirmedActivities = tripData.activities
+        .filter(a=>a.stopId===s.id && a.status==='confirmed')
+        .sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+      return `
+      <div class="stop-card ${openStops[s.id]?'open':''}" data-stop="${s.id}">
+        <div class="stop-head" data-toggle="${s.id}">
+          <div class="stop-title">
+            <span class="name">${s.name}</span>
+            <span class="meta">${s.dates}</span>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="stop-body">
+          <a class="maps-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.mapQuery)}" target="_blank" rel="noopener">📍 Voir sur Maps</a>
+          ${s.accommodation ? `
+            <div class="accommodation-block">
+              <p class="notes-title">Logement</p>
+              ${s.accommodation.mapsUrl ? `<a class="maps-link" href="${s.accommodation.mapsUrl}" target="_blank" rel="noopener">🏠 Voir le logement sur Maps</a>` : ''}
+              ${s.accommodation.note ? `<p class="accommodation-note ${s.accommodation.warning?'warning':''}">${s.accommodation.warning ? '⚠️ ' : ''}${s.accommodation.note}</p>` : ''}
+            </div>
+          ` : ''}
+          <div class="stop-activities">
+            <p class="notes-title">Activités confirmées</p>
+            ${confirmedActivities.length ? confirmedActivities.map(a=>`
+              <div class="cl-item">
+                <button class="cl-check ${a.checked?'checked':''}" data-activity-check="${a.id}"></button>
+                <div style="flex:1;">
+                  <div class="cl-text">${a.name} <span class="price">— ${a.priceLabel || a.amountEUR.toFixed(0)+'€'}</span></div>
+                  <div class="cl-by">${formatFrenchDate(a.date)} · <a class="maps-link" style="margin-bottom:0;" href="${a.mapsUrl}" target="_blank" rel="noopener">Maps</a>${a.checked && a.checkedBy ? ' · coché par '+a.checkedBy : ''}</div>
+                </div>
+              </div>
+            `).join('') : '<p class="no-detail">Aucune activité confirmée pour l’instant — propose et confirme des activités dans l’onglet Activités</p>'}
+          </div>
+          <div class="stop-notes">
+            <p class="notes-title">Notes</p>
+            ${notes.length ? `<ul class="notes-list">${notes.map(n=>`
+              <li class="note-item">
+                <div class="note-text">${n.text}</div>
+                <div class="note-meta"><span>${n.by||'?'}</span><button class="del-btn" data-del-note="${s.id}|${n.id}">×</button></div>
+              </li>
+            `).join('')}</ul>` : '<p class="no-detail">Aucune note pour l’instant</p>'}
+            <div class="note-form">
+              <input class="note-input" data-note-input="${s.id}" placeholder="Ajouter une note (adresse, tip, rappel...)" />
+              <button class="btn note-add-btn" data-note-add="${s.id}" style="width:auto">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;}).join('');
+
+    el.querySelectorAll('[data-toggle]').forEach(node=>{
+      node.addEventListener('click', ()=>{
+        const id = node.getAttribute('data-toggle');
+        openStops[id] = !openStops[id];
+        renderItinerary();
+      });
+    });
+
+    el.querySelectorAll('[data-note-add]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const stopId = btn.getAttribute('data-note-add');
+        const input = el.querySelector(`[data-note-input="${stopId}"]`);
+        const text = input.value.trim();
+        if(!text) return;
+        if(!tripData.notes[stopId]) tripData.notes[stopId] = [];
+        tripData.notes[stopId].push({id: Date.now().toString(), text, by: myName || 'quelqu’un'});
+        await saveTrip();
+        renderItinerary();
+      });
+    });
+
+    el.querySelectorAll('[data-del-note]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const [stopId, noteId] = btn.getAttribute('data-del-note').split('|');
+        tripData.notes[stopId] = (tripData.notes[stopId]||[]).filter(n=>n.id!==noteId);
+        await saveTrip();
+        renderItinerary();
+      });
+    });
+
+    el.querySelectorAll('[data-activity-check]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.getAttribute('data-activity-check');
+        const act = tripData.activities.find(a=>a.id===id);
+        if(!act) return;
+        if(act.checked){ act.checked = false; act.checkedBy = null; }
+        else { act.checked = true; act.checkedBy = myName || 'quelqu’un'; }
+        await saveTrip();
+        renderItinerary();
+      });
+    });
+  }
+
+  // ---------- budget ----------
+  function computeBudget(){
+    let total = 0;
+    const byPerson = {};
+    const byCategory = {};
+    tripData.expenses.forEach(e=>{
+      const eur = e.amountEUR!=null ? Number(e.amountEUR) : Number(e.amount||0);
+      total += eur;
+      byPerson[e.paidBy] = (byPerson[e.paidBy]||0) + eur;
+      byCategory[e.cat] = (byCategory[e.cat]||0) + eur;
+    });
+    const remaining = TOTAL_BUDGET - total;
+    return {total, remaining, byPerson, byCategory};
+  }
+
+  function computeSettlement(names, byPerson, total){
+    if(names.length < 2) return [];
+    const fairShare = total / names.length;
+    const creditors = [];
+    const debtors = [];
+    names.forEach(name=>{
+      const balance = (byPerson[name]||0) - fairShare;
+      if(balance > 0.5) creditors.push({name, balance});
+      else if(balance < -0.5) debtors.push({name, balance});
+    });
+    creditors.sort((a,b)=>b.balance-a.balance);
+    debtors.sort((a,b)=>a.balance-b.balance);
+    const transactions = [];
+    let i=0, j=0;
+    while(i<debtors.length && j<creditors.length){
+      const pay = Math.min(-debtors[i].balance, creditors[j].balance);
+      if(pay > 0.5) transactions.push({from: debtors[i].name, to: creditors[j].name, amount: pay});
+      debtors[i].balance += pay;
+      creditors[j].balance -= pay;
+      if(Math.abs(debtors[i].balance) < 0.5) i++;
+      if(Math.abs(creditors[j].balance) < 0.5) j++;
+    }
+    return transactions;
+  }
+
+  function renderBudget(){
+    const el = document.getElementById('panel-budget');
+    const {total, remaining, byPerson, byCategory} = computeBudget();
+    const people = Object.keys(byPerson);
+    const participantNames = tripData.participants.length ? tripData.participants : people;
+    const settlement = computeSettlement(participantNames, byPerson, total);
+    const categories = Object.entries(byCategory).sort((a,b)=>b[1]-a[1]);
+
+    el.innerHTML = `
+      <div class="name-banner">
+        <span>Tu es :</span>
+        ${nameSelectHTML('name-input', myName)}
+        <button class="btn" id="save-name-btn" style="width:auto">OK</button>
+      </div>
+
+      <div class="ledger-top">
+        <div class="ledger-box">
+          <div class="label">Budget groupe</div>
+          <div class="value">${TOTAL_BUDGET}€</div>
+          <div class="ledger-sub">≈ ${formatIDR(TOTAL_BUDGET)}</div>
+        </div>
+        <div class="ledger-box">
+          <div class="label">Dépensé</div>
+          <div class="value">${total.toFixed(0)}€</div>
+          <div class="ledger-sub">≈ ${formatIDR(total)}</div>
+        </div>
+        <div class="ledger-box ${remaining<0?'over':'ok'}">
+          <div class="label">Reste</div>
+          <div class="value">${remaining.toFixed(0)}€</div>
+          <div class="ledger-sub">≈ ${formatIDR(remaining)}</div>
+        </div>
+      </div>
+
+      <p class="rate-note">1€ ≈ ${Math.round(IDR_PER_EUR).toLocaleString('fr-FR')} IDR ${exchangeRateSource==='live' ? '· taux en direct' : exchangeRateSource==='cache' ? '· taux en direct (en cache)' : '· taux par défaut, hors-ligne'}</p>
+
+      <div class="form-card">
+        <p class="form-title">Budget recommandé par phase</p>
+        <div class="phase-ref-row">
+          <span class="phase-name">Avant Bali (Java)</span>
+          <span class="phase-amt">${AVANT_BALI_PER_PERSON}€/pers · ${AVANT_BALI_PER_PERSON*NB_PEOPLE}€ groupe</span>
+        </div>
+        <div class="phase-ref-row">
+          <span class="phase-name">À Bali</span>
+          <span class="phase-amt">${A_BALI_PER_PERSON}€/pers · ${A_BALI_PER_PERSON*NB_PEOPLE}€ groupe</span>
+        </div>
+        <div class="phase-ref-row total">
+          <span class="phase-name">Total recommandé</span>
+          <span class="phase-amt">${BUDGET_PER_PERSON}€/pers · ${TOTAL_BUDGET}€ groupe</span>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <p class="form-title">Suivi par personne — part égale du dépensé, sur ${BUDGET_PER_PERSON}€/pers recommandés</p>
+        ${participantNames.length ? participantNames.map(name=>{
+          const share = total / participantNames.length;
+          const pct = Math.min(100, Math.round((share/BUDGET_PER_PERSON)*100));
+          const over = share > BUDGET_PER_PERSON;
+          return `
+            <div class="person-budget-row">
+              <div class="person-budget-head">
+                <span>${name}</span>
+                <span class="${over?'over':''}">${share.toFixed(0)}€ / ${BUDGET_PER_PERSON}€</span>
+              </div>
+              <div class="cl-progress-track"><div class="cl-progress-fill ${over?'over':''}" style="width:${pct}%"></div></div>
+            </div>
+          `;
+        }).join('') : '<p class="empty">Ajoute des participants ci-dessous pour voir le suivi par personne</p>'}
+      </div>
+
+      <div class="people-row">
+        ${people.length ? people.map(p=>`<span class="chip">${p} : <b>${byPerson[p].toFixed(0)}€</b> avancés</span>`).join('') : '<span class="empty">Aucune dépense enregistrée pour l’instant</span>'}
+      </div>
+
+      <div class="form-card">
+        <p class="form-title">Participants (pour le calcul des remboursements)</p>
+        <div class="people-row">
+          ${tripData.participants.length ? tripData.participants.map(p=>`
+            <span class="chip">${p} <button class="chip-remove" data-remove-participant="${p}">×</button></span>
+          `).join('') : '<span class="empty">Ajoute les 5 prénoms pour un calcul précis (sinon on se base sur les payeurs)</span>'}
+        </div>
+        <div class="form-grid" style="grid-template-columns:1fr auto;">
+          <input id="participant-input" placeholder="Prénom" />
+          <button class="btn" id="add-participant-btn" style="width:auto;margin-top:0;">Ajouter</button>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <p class="form-title">Qui doit combien à qui</p>
+        ${settlement.length ? settlement.map(t=>`
+          <div class="settle-row">
+            <span class="settle-name">${t.from}</span>
+            <span class="settle-arrow">→</span>
+            <span class="settle-name">${t.to}</span>
+            <span class="expense-amount">${t.amount.toFixed(0)}€</span>
+          </div>
+        `).join('') : `<p class="empty">${participantNames.length < 2 ? 'Ajoute au moins 2 participants ci-dessus pour calculer les remboursements' : 'Tout le monde est à égalité 🎉'}</p>`}
+      </div>
+
+      <div class="form-card">
+        <p class="form-title">Répartition par catégorie</p>
+        ${categories.length ? categories.map(([cat,amt])=>{
+          const pct = total>0 ? Math.round((amt/total)*100) : 0;
+          return `
+          <div class="cat-bar-row">
+            <div class="cat-bar-label"><span>${cat}</span><span>${amt.toFixed(0)}€ · ${pct}%</span></div>
+            <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%"></div></div>
+          </div>`;
+        }).join('') : '<p class="empty">Aucune dépense enregistrée pour l’instant</p>'}
+      </div>
+
+      <div class="form-card">
+        <p class="form-title">Ajouter une dépense</p>
+        <div class="form-grid">
+          <input id="exp-desc" placeholder="Description (ex: taxi Sanur)" />
+          <select id="exp-cat">
+            <option value="Transport">Transport</option>
+            <option value="Activité">Activité</option>
+            <option value="Logement">Logement</option>
+            <option value="Nourriture">Nourriture</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <input id="exp-amount" type="number" placeholder="Montant" />
+          <select id="exp-currency">
+            <option value="EUR">€</option>
+            <option value="IDR">IDR</option>
+          </select>
+          <div style="grid-column:span 2;">${nameSelectHTML('exp-paidby', myName)}</div>
+        </div>
+        <button class="btn" id="add-expense-btn">Ajouter</button>
+      </div>
+
+      <div class="form-card">
+        <p class="form-title">Historique</p>
+        <div id="expense-list">
+          ${tripData.expenses.length ? tripData.expenses.slice().reverse().map(e=>{
+            const eur = e.amountEUR!=null ? Number(e.amountEUR) : Number(e.amount||0);
+            const origLabel = e.origCurrency === 'IDR' ? `${Number(e.origAmount).toLocaleString('fr-FR')} IDR` : null;
+            return `
+            <div class="expense-row">
+              <div class="expense-main">
+                <span class="desc">${e.desc}</span>
+                <span class="sub">${e.cat} · payé par ${e.paidBy||'?'}${origLabel ? ' · '+origLabel : ''}</span>
+              </div>
+              <div style="display:flex;align-items:center;">
+                <span class="expense-amount">${eur.toFixed(0)}€</span>
+                <button class="del-btn" data-del="${e.id}">×</button>
+              </div>
+            </div>
+          `;}).join('') : '<p class="empty">Rien à afficher</p>'}
+        </div>
+      </div>
+
+      <div class="form-card">
+        <p class="form-title">Sauvegarde</p>
+        <div class="backup-actions">
+          <button class="btn" id="export-btn" style="width:auto;">Exporter (JSON)</button>
+          <button class="btn" id="import-btn" style="width:auto;">Importer</button>
+          <input type="file" id="import-file" accept="application/json" hidden />
+        </div>
+      </div>
+    `;
+
+    document.getElementById('save-name-btn').addEventListener('click', async ()=>{
+      myName = document.getElementById('name-input').value.trim();
+      await saveName();
+      renderBudget();
+    });
+
+    document.getElementById('add-participant-btn').addEventListener('click', async ()=>{
+      const input = document.getElementById('participant-input');
+      const name = input.value.trim();
+      if(!name || tripData.participants.includes(name)) return;
+      tripData.participants.push(name);
+      await saveTrip();
+      renderBudget();
+    });
+
+    el.querySelectorAll('[data-remove-participant]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const name = btn.getAttribute('data-remove-participant');
+        tripData.participants = tripData.participants.filter(p=>p!==name);
+        await saveTrip();
+        renderBudget();
+      });
+    });
+
+    document.getElementById('add-expense-btn').addEventListener('click', async ()=>{
+      const desc = document.getElementById('exp-desc').value.trim();
+      const amountRaw = document.getElementById('exp-amount').value;
+      const currency = document.getElementById('exp-currency').value;
+      const cat = document.getElementById('exp-cat').value;
+      const paidBy = document.getElementById('exp-paidby').value.trim() || myName || 'Inconnu';
+      if(!desc || !amountRaw) return;
+      const amount = Number(amountRaw);
+      const amountEUR = currency === 'IDR' ? amount / IDR_PER_EUR : amount;
+      tripData.expenses.push({id: Date.now().toString(), desc, amountEUR, origAmount: amount, origCurrency: currency, cat, paidBy});
+      await saveTrip();
+      renderBudget();
+    });
+
+    el.querySelectorAll('[data-del]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.getAttribute('data-del');
+        tripData.expenses = tripData.expenses.filter(e=>e.id!==id);
+        await saveTrip();
+        renderBudget();
+      });
+    });
+
+    document.getElementById('export-btn').addEventListener('click', ()=>{
+      const blob = new Blob([JSON.stringify(tripData, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bali-trip-data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('import-btn').addEventListener('click', ()=>{
+      document.getElementById('import-file').click();
+    });
+
+    document.getElementById('import-file').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      try{
+        const text = await file.text();
+        tripData = JSON.parse(text);
+        normalizeTripData();
+        await saveTrip();
+        renderBudget();
+        renderChecklist();
+        renderItinerary();
+      }catch(err){ console.error('import failed', err); }
+      e.target.value = '';
+    });
+  }
+
+  // ---------- checklist ----------
+  // Shows confirmed activities only (grouped by city) — proposed activities aren't checklist items
+  // until someone confirms them with a date in the Activités tab.
+  function renderChecklist(){
+    const el = document.getElementById('panel-checklist');
+    const confirmed = tripData.activities.filter(a=>a.status==='confirmed');
+    const totalItems = confirmed.length;
+    const totalChecked = confirmed.filter(a=>a.checked).length;
+    const totalPct = totalItems ? Math.round((totalChecked/totalItems)*100) : 0;
+
+    const groups = STOPS
+      .map(s=>({stop: s, items: confirmed.filter(a=>a.stopId===s.id).sort((a,b)=> (a.date||'').localeCompare(b.date||''))}))
+      .filter(g=>g.items.length);
+
+    el.innerHTML = `
+      <div class="name-banner">
+        <span>Tu es :</span>
+        ${nameSelectHTML('name-input-cl', myName)}
+        <button class="btn" id="save-name-btn-cl" style="width:auto">OK</button>
+      </div>
+      <div class="cl-group">
+        <div class="cl-group-head">
+          <span class="name">Progression globale</span>
+          <span class="cl-text" style="flex:none;">${totalChecked}/${totalItems}</span>
+        </div>
+        <div class="cl-progress-track"><div class="cl-progress-fill" style="width:${totalPct}%"></div></div>
+      </div>
+    ` + (groups.length ? groups.map(g=>{
+      const checkedCount = g.items.filter(a=>a.checked).length;
+      const pct = Math.round((checkedCount/g.items.length)*100);
+      return `
+        <div class="cl-group">
+          <div class="cl-group-head">
+            <span class="name">${g.stop.name}</span>
+            <span class="cl-text" style="flex:none;">${checkedCount}/${g.items.length}</span>
+          </div>
+          <div class="cl-progress-track"><div class="cl-progress-fill" style="width:${pct}%"></div></div>
+          ${g.items.map(a=>`
+            <div class="cl-item">
+              <button class="cl-check ${a.checked?'checked':''}" data-activity-check="${a.id}"></button>
+              <div style="flex:1;">
+                <div class="cl-text">${a.name} <span class="price">— ${a.priceLabel || a.amountEUR.toFixed(0)+'€'}</span></div>
+                <div class="cl-by">${formatFrenchDate(a.date)}${a.checked && a.checkedBy ? ' · coché par '+a.checkedBy : ''}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }).join('') : '<p class="empty">Aucune activité confirmée pour l’instant — confirme des activités (avec une date) dans l’onglet Activités</p>');
+
+    document.getElementById('save-name-btn-cl').addEventListener('click', async ()=>{
+      myName = document.getElementById('name-input-cl').value.trim();
+      await saveName();
+      renderChecklist();
+    });
+
+    el.querySelectorAll('[data-activity-check]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.getAttribute('data-activity-check');
+        const act = tripData.activities.find(a=>a.id===id);
+        if(!act) return;
+        if(act.checked){ act.checked = false; act.checkedBy = null; }
+        else { act.checked = true; act.checkedBy = myName || 'quelqu’un'; }
+        await saveTrip();
+        renderChecklist();
+      });
+    });
+  }
+
+  // ---------- activities ----------
+  function isValidMapsUrl(url){
+    return /^https?:\/\//i.test(url.trim());
+  }
+
+  function activityRowHTML(a, opts){
+    const showCity = opts && opts.showCity;
+    const rowStop = STOPS.find(s=>s.id===a.stopId);
+    const origLabel = a.origCurrency === 'IDR' ? `${Number(a.origAmount).toLocaleString('fr-FR')} IDR` : null;
+    const priceDisplay = a.priceLabel || `${a.amountEUR.toFixed(0)}€`;
+    return `
+      <div class="activity-row">
+        <div class="activity-main">
+          <span class="desc">${a.name}${showCity ? ` <span class="activity-city-tag">— ${rowStop.name}</span>` : ''}</span>
+          <span class="sub">
+            <a class="maps-link" href="${a.mapsUrl}" target="_blank" rel="noopener">📍 Maps</a>
+            · proposé par ${a.addedBy}${origLabel ? ' · '+origLabel : ''}
+            ${a.status==='confirmed' ? ` · confirmée pour le ${formatFrenchDate(a.date)}` : ''}
+          </span>
+        </div>
+        <div class="activity-actions">
+          <span class="expense-amount">${priceDisplay}</span>
+          ${a.status==='proposed' ? `
+            <input type="date" class="act-date-input" data-activity-date-input="${a.id}" min="${rowStop.start}" max="${rowStop.end}" required />
+            <button class="btn" data-confirm-activity="${a.id}" style="width:auto;margin-top:0;">Confirmer</button>
+          ` : ''}
+          <button class="del-btn" data-del-activity="${a.id}">×</button>
+        </div>
+      </div>
+    `;
+  }
+
+  let activitySearch = '';
+
+  function renderActivities(){
+    const el = document.getElementById('panel-activites');
+    const searchWasFocused = document.activeElement && document.activeElement.id === 'activity-search-input';
+    const searchCursor = searchWasFocused ? document.activeElement.selectionStart : null;
+    const stop = STOPS.find(s=>s.id===activityCity) || STOPS[0];
+    const query = activitySearch.trim().toLowerCase();
+    const isSearching = query.length > 0;
+    const pool = isSearching
+      ? tripData.activities.filter(a=>a.name.toLowerCase().includes(query))
+      : tripData.activities.filter(a=>a.stopId===activityCity);
+    const proposed = pool.filter(a=>a.status==='proposed');
+    const confirmed = pool.filter(a=>a.status==='confirmed').sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+    const rowOpts = {showCity: isSearching};
+
+    el.innerHTML = `
+      <div class="form-card">
+        <p class="form-title">Rechercher (toutes les villes)</p>
+        <div class="search-row">
+          <input id="activity-search-input" placeholder="Nom d'une activité..." value="${activitySearch}" />
+          <button class="btn" id="activity-search-clear" style="width:auto;margin-top:0;">×</button>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <p class="form-title">Ville</p>
+        <select id="activity-city-select" ${isSearching?'disabled':''}>
+          ${STOPS.map(s=>`<option value="${s.id}" ${s.id===activityCity?'selected':''}>${s.name}</option>`).join('')}
+        </select>
+      </div>
+
+      <div class="form-card">
+        <p class="form-title">Activités confirmées — à absolument faire</p>
+        ${confirmed.length ? confirmed.map(a=>activityRowHTML(a, rowOpts)).join('') : `<p class="empty">${isSearching ? 'Aucun résultat confirmé' : `Aucune activité confirmée pour ${stop.name}`}</p>`}
+      </div>
+
+      <div class="form-card">
+        <p class="form-title">Activités proposées</p>
+        ${proposed.length ? proposed.map(a=>activityRowHTML(a, rowOpts)).join('') : `<p class="empty">${isSearching ? 'Aucun résultat proposé' : `Aucune activité proposée pour ${stop.name}`}</p>`}
+      </div>
+
+      ${isSearching ? `<p class="empty">Efface la recherche pour proposer une nouvelle activité</p>` : `
+      <div class="form-card">
+        <p class="form-title">Proposer une activité à ${stop.name}</p>
+        <div class="form-grid">
+          <input id="act-name" placeholder="Nom de l'activité" />
+          <input id="act-maps" placeholder="Lien Google Maps (obligatoire)" />
+          <input id="act-amount" type="number" placeholder="Prix (obligatoire)" />
+          <select id="act-currency">
+            <option value="EUR">€</option>
+            <option value="IDR">IDR</option>
+          </select>
+          <div style="grid-column:span 2;">${nameSelectHTML('act-by', myName)}</div>
+        </div>
+        <button class="btn" id="add-activity-btn">Proposer</button>
+        <p class="field-hint" id="activity-error" hidden>Nom, prix, lien Google Maps (commençant par http) et ajouté par sont tous obligatoires.</p>
+      </div>
+      `}
+    `;
+
+    const searchInputEl = document.getElementById('activity-search-input');
+    searchInputEl.addEventListener('input', (e)=>{
+      activitySearch = e.target.value;
+      renderActivities();
+    });
+    if(searchWasFocused){
+      searchInputEl.focus();
+      if(searchCursor != null) searchInputEl.setSelectionRange(searchCursor, searchCursor);
+    }
+
+    document.getElementById('activity-search-clear').addEventListener('click', ()=>{
+      activitySearch = '';
+      renderActivities();
+    });
+
+    document.getElementById('activity-city-select').addEventListener('change', (e)=>{
+      activityCity = e.target.value;
+      renderActivities();
+    });
+
+    if(!isSearching){
+      document.getElementById('add-activity-btn').addEventListener('click', async ()=>{
+        const name = document.getElementById('act-name').value.trim();
+        const mapsUrl = document.getElementById('act-maps').value.trim();
+        const amountRaw = document.getElementById('act-amount').value;
+        const currency = document.getElementById('act-currency').value;
+        const addedBy = document.getElementById('act-by').value.trim();
+        const errorEl = document.getElementById('activity-error');
+
+        if(!name || !amountRaw || !mapsUrl || !addedBy || !isValidMapsUrl(mapsUrl)){
+          errorEl.hidden = false;
+          return;
+        }
+
+        const amount = Number(amountRaw);
+        const amountEUR = currency === 'IDR' ? amount / IDR_PER_EUR : amount;
+        tripData.activities.push({
+          id: Date.now().toString(), stopId: activityCity, name, mapsUrl,
+          amountEUR, origAmount: amount, origCurrency: currency,
+          addedBy, status: 'proposed', date: null, checked: false, checkedBy: null
+        });
+        await saveTrip();
+        renderActivities();
+      });
+    }
+
+    el.querySelectorAll('[data-confirm-activity]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.getAttribute('data-confirm-activity');
+        const act = tripData.activities.find(a=>a.id===id);
+        if(!act) return;
+        const s = STOPS.find(st=>st.id===act.stopId) || stop;
+        const dateInput = el.querySelector(`[data-activity-date-input="${id}"]`);
+        const date = dateInput.value;
+        if(!date){
+          dateInput.setCustomValidity('Choisis une date avant de confirmer.');
+          dateInput.reportValidity();
+          return;
+        }
+        if(date < s.start || date > s.end){
+          dateInput.setCustomValidity(`La date doit être comprise entre le ${s.start} et le ${s.end}.`);
+          dateInput.reportValidity();
+          return;
+        }
+        dateInput.setCustomValidity('');
+        act.status = 'confirmed';
+        act.date = date;
+        await saveTrip();
+        renderActivities();
+      });
+    });
+
+    el.querySelectorAll('[data-del-activity]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.getAttribute('data-del-activity');
+        tripData.activities = tripData.activities.filter(a=>a.id!==id);
+        await saveTrip();
+        renderActivities();
+      });
+    });
+  }
+
+  // ---------- tabs ----------
+  function setupTabs(){
+    document.querySelectorAll('.tab').forEach(tab=>{
+      tab.addEventListener('click', ()=>{
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        tab.classList.add('active');
+        const target = tab.getAttribute('data-tab');
+        document.getElementById('panel-itineraire').hidden = target!=='itineraire';
+        document.getElementById('panel-budget').hidden = target!=='budget';
+        document.getElementById('panel-checklist').hidden = target!=='checklist';
+        document.getElementById('panel-activites').hidden = target!=='activites';
+        // re-render the target panel on every switch so cross-tab state (confirmed activities, myName, ...) is never stale
+        if(target==='itineraire') renderItinerary();
+        if(target==='budget') renderBudget();
+        if(target==='checklist') renderChecklist();
+        if(target==='activites') renderActivities();
+      });
+    });
+  }
+
+  // ---------- init ----------
+  async function init(){
+    renderTimeline();
+    renderCountdown();
+    renderItinerary();
+    setupTabs();
+    await Promise.all([loadAll(), refreshExchangeRate()]);
+    if(seedActivitiesFromChecklist()) await saveTrip();
+    renderItinerary();
+    renderBudget();
+    renderChecklist();
+    renderActivities();
+  }
+
+  init();
+})();
+</script>
