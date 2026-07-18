@@ -248,8 +248,6 @@
   .note-form{display:flex;gap:8px;}
   .note-input{flex:1;}
 
-  .chip-remove{background:none;border:none;color:var(--clay);cursor:pointer;font-size:13px;margin-left:4px;padding:0;}
-
   .cat-bar-row{margin-bottom:12px;}
   .cat-bar-row:last-child{margin-bottom:0;}
   .cat-bar-label{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;}
@@ -333,7 +331,7 @@
     input,select{font-size:16px;}
     .btn{padding:12px 16px;}
     .cl-check{width:24px;height:24px;}
-    .del-btn,.chip-remove{padding:6px 8px;}
+    .del-btn{padding:6px 8px;}
   }
 </style>
 
@@ -430,7 +428,8 @@
     ]},
   ];
 
-  const NB_PEOPLE = 5;
+  const PARTICIPANTS = ['Adel', 'Adem', 'Ismet', 'Ilyes', 'Chawki']; // groupe fixe, pas d'ajout/suppression à l'usage
+  const NB_PEOPLE = PARTICIPANTS.length;
   const AVANT_BALI_PER_PERSON = 350; // recommandé, partie Java (Jakarta → Banyuwangi)
   const A_BALI_PER_PERSON = 700; // recommandé, partie Bali (Ubud → Uluwatu)
   const BUDGET_PER_PERSON = AVANT_BALI_PER_PERSON + A_BALI_PER_PERSON; // 1050€/pers
@@ -465,7 +464,7 @@
     }catch(e){ console.error('exchange rate fetch failed, using fallback rate', e); }
   }
 
-  let tripData = {expenses: [], notes: {}, participants: [], activities: [], seeded: false};
+  let tripData = {expenses: [], notes: {}, activities: [], seeded: false};
   let myName = '';
   let openStops = {};
   let activityCity = STOPS[0].id;
@@ -473,7 +472,6 @@
   function normalizeTripData(){
     if(!Array.isArray(tripData.expenses)) tripData.expenses = [];
     if(!tripData.notes || typeof tripData.notes !== 'object') tripData.notes = {};
-    if(!Array.isArray(tripData.participants)) tripData.participants = [];
     if(!Array.isArray(tripData.activities)) tripData.activities = [];
     if(typeof tripData.seeded !== 'boolean') tripData.seeded = false;
   }
@@ -482,15 +480,11 @@
     return Math.round(eur * IDR_PER_EUR).toLocaleString('fr-FR') + ' IDR';
   }
 
-  // Renders a <select> of tripData.participants (so paidBy/addedBy/myName are always an exact,
-  // canonical string instead of free-typed text prone to "Adel" vs "adel" mismatches in the
-  // budget/settlement calculations). Falls back to a plain text input until participants exist —
-  // same element id either way, so callers can keep reading `.value` unchanged.
+  // Renders a <select> of the fixed PARTICIPANTS list (so paidBy/addedBy/myName are always an
+  // exact, canonical string instead of free-typed text prone to "Adel" vs "adel" mismatches in
+  // the budget/settlement calculations).
   function nameSelectHTML(id, selected){
-    if(!tripData.participants.length){
-      return `<input id="${id}" placeholder="ton prénom" value="${selected||''}" />`;
-    }
-    const options = tripData.participants.map(p=>`<option value="${p}" ${p===selected?'selected':''}>${p}</option>`).join('');
+    const options = PARTICIPANTS.map(p=>`<option value="${p}" ${p===selected?'selected':''}>${p}</option>`).join('');
     return `<select id="${id}"><option value="">— choisir —</option>${options}</select>`;
   }
 
@@ -828,8 +822,7 @@
     const el = document.getElementById('panel-budget');
     const {total, remaining, byPerson, byCategory} = computeBudget();
     const people = Object.keys(byPerson);
-    const participantNames = tripData.participants.length ? tripData.participants : people;
-    const settlement = computeSettlement(participantNames, byPerson, total);
+    const settlement = computeSettlement(PARTICIPANTS, byPerson, total);
     const categories = Object.entries(byCategory).sort((a,b)=>b[1]-a[1]);
 
     el.innerHTML = `
@@ -877,8 +870,8 @@
 
       <div class="form-card">
         <p class="form-title">Suivi par personne — part égale du dépensé, sur ${BUDGET_PER_PERSON}€/pers recommandés</p>
-        ${participantNames.length ? participantNames.map(name=>{
-          const share = total / participantNames.length;
+        ${PARTICIPANTS.map(name=>{
+          const share = total / PARTICIPANTS.length;
           const pct = Math.min(100, Math.round((share/BUDGET_PER_PERSON)*100));
           const over = share > BUDGET_PER_PERSON;
           return `
@@ -890,24 +883,11 @@
               <div class="cl-progress-track"><div class="cl-progress-fill ${over?'over':''}" style="width:${pct}%"></div></div>
             </div>
           `;
-        }).join('') : '<p class="empty">Ajoute des participants ci-dessous pour voir le suivi par personne</p>'}
+        }).join('')}
       </div>
 
       <div class="people-row">
         ${people.length ? people.map(p=>`<span class="chip">${p} : <b>${byPerson[p].toFixed(0)}€</b> avancés</span>`).join('') : '<span class="empty">Aucune dépense enregistrée pour l’instant</span>'}
-      </div>
-
-      <div class="form-card">
-        <p class="form-title">Participants (pour le calcul des remboursements)</p>
-        <div class="people-row">
-          ${tripData.participants.length ? tripData.participants.map(p=>`
-            <span class="chip">${p} <button class="chip-remove" data-remove-participant="${p}">×</button></span>
-          `).join('') : '<span class="empty">Ajoute les 5 prénoms pour un calcul précis (sinon on se base sur les payeurs)</span>'}
-        </div>
-        <div class="form-grid" style="grid-template-columns:1fr auto;">
-          <input id="participant-input" placeholder="Prénom" />
-          <button class="btn" id="add-participant-btn" style="width:auto;margin-top:0;">Ajouter</button>
-        </div>
       </div>
 
       <div class="form-card">
@@ -919,7 +899,7 @@
             <span class="settle-name">${t.to}</span>
             <span class="expense-amount">${t.amount.toFixed(0)}€</span>
           </div>
-        `).join('') : `<p class="empty">${participantNames.length < 2 ? 'Ajoute au moins 2 participants ci-dessus pour calculer les remboursements' : 'Tout le monde est à égalité 🎉'}</p>`}
+        `).join('') : `<p class="empty">Tout le monde est à égalité 🎉</p>`}
       </div>
 
       <div class="form-card">
@@ -990,24 +970,6 @@
       myName = document.getElementById('name-input').value.trim();
       await saveName();
       renderBudget();
-    });
-
-    document.getElementById('add-participant-btn').addEventListener('click', async ()=>{
-      const input = document.getElementById('participant-input');
-      const name = input.value.trim();
-      if(!name || tripData.participants.includes(name)) return;
-      tripData.participants.push(name);
-      await saveTrip();
-      renderBudget();
-    });
-
-    el.querySelectorAll('[data-remove-participant]').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        const name = btn.getAttribute('data-remove-participant');
-        tripData.participants = tripData.participants.filter(p=>p!==name);
-        await saveTrip();
-        renderBudget();
-      });
     });
 
     document.getElementById('add-expense-btn').addEventListener('click', async ()=>{
